@@ -38,9 +38,8 @@ import org.apache.spark.sql.functions._
  */
 class SparkS3Integration(awsAccessKey:String,awsSecretKey:String) extends java.io.Serializable {
 	var s3Client:AmazonS3Client = null
-	val S3FileSystemPrefix = "s3n://"
+	val S3Scheme = "s3n://"
 	var S3FileSeparator = "/"
-
 
 			/**
 			 * Initializes Spark Session object and also configures aws access key and secret keys in spark context. 
@@ -122,7 +121,7 @@ class SparkS3Integration(awsAccessKey:String,awsSecretKey:String) extends java.i
 			def readS3Files(path:String) {
 				val spark = initSpark()
 						import spark.implicits._
-						val fileRDD = initSpark().sparkContext.textFile(S3FileSystemPrefix.concat(path)).toDS()
+						val fileRDD = initSpark().sparkContext.textFile(S3Scheme.concat(path)).toDS()
 						fileRDD.foreach(record=>println(record))  
 			}
 }
