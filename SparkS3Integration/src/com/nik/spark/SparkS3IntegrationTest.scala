@@ -1,27 +1,13 @@
-package com.nik.spark.fileSystemWordCount
+package com.nik.spark
 
 import scala.collection.mutable.ListBuffer
-import org.apache.spark.sql.{DataFrame, Row, SQLContext, DataFrameReader}
-import org.apache.spark.{InterruptibleIterator, TaskContext, Partition, SparkContext}
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary
 import scala.collection.JavaConversions._
-import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, BasicAWSCredentials}
-import com.amazonaws.services.s3.iterable.S3Objects
 import org.apache.spark._
 import org.apache.spark.SparkContext._
 import org.apache.spark.sql._
 import org.apache.log4j._
-import scala.io.Source
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
 import org.apache.spark.sql.functions._
+import com.nik.spark.SparkS3Integration
 
 /**
  * Traverses s3 or provided bucket and explores files and folders, reads files using spark and displays all paths.
