@@ -20,8 +20,7 @@ import org.apache.spark.sql.functions._
  * Traverses s3 either entirely including all buckets or for a bucket only based on provided bucket name.  
  */
 class SparkS3Integration(awsAccessKey:String,awsSecretKey:String) extends java.io.Serializable {
-	var s3Client:AmazonS3Client = null
-	val S3Scheme = "s3n://"
+  val S3Scheme = "s3n://"
 	var S3FileSeparator = "/"
 
 			/**
@@ -47,7 +46,7 @@ class SparkS3Integration(awsAccessKey:String,awsSecretKey:String) extends java.i
 			 */
 			def initS3Client():AmazonS3Client = {
 					val credential = new BasicAWSCredentials(awsAccessKey,awsSecretKey)
-					s3Client = new AmazonS3Client(credential)
+					val s3Client = new AmazonS3Client(credential)
 					s3Client
 			}
 
@@ -65,6 +64,7 @@ class SparkS3Integration(awsAccessKey:String,awsSecretKey:String) extends java.i
 			 * @param s3Paths The list in which all routes are stored.
 			 */
 			def traverses3(s3Paths:ListBuffer[String]) {
+			  val s3Client = initS3Client()
 				var buckets = s3Client.listBuckets()
 						buckets.toSeq.foreach { bucket => 
 						var s3Objects = S3Objects.withPrefix(s3Client,bucket.getName(),"")
@@ -82,6 +82,7 @@ class SparkS3Integration(awsAccessKey:String,awsSecretKey:String) extends java.i
 			 * @param s3Paths The list in which all routes are stored
 			 */
 			def traverseS3(bucketName:String, path:String,s3Paths:ListBuffer[String]) {
+			  val s3Client = initS3Client()
 				if(isRootPath(path)) {
 					var s3Objects = S3Objects.withPrefix(s3Client,bucketName,path)
 							for(s3Object <- s3Objects) {
