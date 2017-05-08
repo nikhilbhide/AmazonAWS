@@ -120,10 +120,13 @@ class SparkS3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) exte
     })
 
     val resultRDD = spark.sparkContext.parallelize(resultList)
-    resultRDD.map(x => (x.checkSum, x.filePath))
+    val results = resultRDD.map(x => (x.checkSum, x.filePath))
       .groupByKey()
       .map(x => (x._1, (x._2, x._2.toList.length)))
       .sortBy(key => key._2._2, ascending = false)
-      .foreach(record => (println(s"Files with checksum ${record._1} are ${record._2._1.toList} and duplication count is ${record._2._2}")))
+      .collect()
+     
+     //display results
+     results.foreach(record => (println(s"Files with checksum ${record._1} are ${record._2._1.toList} and duplication count is ${record._2._2}")))
   }
 }
