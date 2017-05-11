@@ -53,6 +53,6 @@ object SparkS3FindDuplicateFilesTest {
         path = args(4)
       }
     }
-    sparkS3AnalyticsInstance.performS3Analytics()
+   sparkS3AnalyticsInstance.performS3Analytics()
   }
 }
