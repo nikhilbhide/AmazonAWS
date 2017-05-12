@@ -105,7 +105,7 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
     val directoriesDS = spark.sparkContext.parallelize(s3Directories).toDS()
     directoriesDS.cache()
     directoriesDS.createOrReplaceTempView("directories")
-    val directoriesCountPerBucket = spark.sqlContext.sql("select bucket,count(filePath) from directories group by bucket").toJSON.collect()
+    val directoriesCountPerBucket = spark.sqlContext.sql("select bucketName,count(filePath) from directories group by bucketName").toJSON.collect()
     val totalDirectoriesCount = spark.sqlContext.sql("select count(filePath) from directories")
     
     println(s"# of directories in explored s3 path is ${totalDirectoriesCount}")
