@@ -29,7 +29,7 @@ import org.apache.spark.rdd.RDD
   case class FilesByFormatResult(bucketName:String,format:String,filePath:String)
   case class DirectoriesResult(bucketName:String,filePath:String)  
 class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.io.Serializable {
-  val S3Scheme = "s3n://"
+  val S3Scheme = "s3a://"
   var S3FileSeparator = "/"
  
   /**
@@ -43,8 +43,10 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
       .appName("SparkS3Integration")
       .master("local[*]")
       .getOrCreate()
-   spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", awsAccessKey)
-    spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecretKey)
+         spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", awsSecretKey)
+    spark.sparkContext.hadoopConfiguration.set("org.apache.hadoop.fs.s3a.S3AFileSystem", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+
     spark
   }
 
