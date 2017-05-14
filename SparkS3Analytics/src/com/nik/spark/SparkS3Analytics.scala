@@ -79,13 +79,13 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
     var s3Paths = new ListBuffer[String]
     var s3Directories = new ListBuffer[DirectoriesResult]
     val s3Client = initS3Client()
-    
     var buckets = s3Client.listBuckets()
-   // buckets.toSeq.foreach { bucket =>
-      var s3Objects = S3Objects.withPrefix(s3Client, "mysimbucket", "TestFolder/")
+    buckets.toSeq.foreach { bucket =>
+      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
       for (s3Object <- s3Objects) {
         exploreS3(s3Object.getBucketName(), s3Object.getKey, s3Paths,s3Directories)
       }
+    }
       
      checkDuplicateFiles(s3Paths)
      s3AnalyticsByFileFormats(s3Paths)
