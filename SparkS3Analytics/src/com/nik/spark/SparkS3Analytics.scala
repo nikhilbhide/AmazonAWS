@@ -43,7 +43,7 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
       .appName("SparkS3Integration")
       .master("local[*]")
       .getOrCreate()
-         spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", awsSecretKey)
     spark.sparkContext.hadoopConfiguration.set("org.apache.hadoop.fs.s3a.S3AFileSystem", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
@@ -80,17 +80,19 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
     var s3Directories = new ListBuffer[DirectoriesResult]
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
+
     buckets.toSeq.foreach { bucket =>
-      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
+      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName.toString(), "")
       for (s3Object <- s3Objects) {
-        exploreS3(s3Object.getBucketName(), s3Object.getKey, s3Paths,s3Directories)
+         exploreS3(s3Object.getBucketName(), s3Object.getKey, s3Paths,s3Directories)
       }
     }
-      
-     checkDuplicateFiles(s3Paths)
-     s3AnalyticsByFileFormats(s3Paths)
-     s3DirectoryAnalytics(s3Directories)
-     s3AnalyticsByFileFormats(s3Paths)
+     val s3PathsRDD = initSpark().sparkContext.parallelize(s3Paths)
+     val s3DirectoriesRDD = initSpark().sparkContext.parallelize(s3Directories)
+     s3PathsRDD.cache()
+     checkDuplicateFiles(s3PathsRDD)
+     s3DirectoryAnalytics(s3DirectoriesRDD)
+     s3AnalyticsByFileFormats(s3PathsRDD)
   }
   
   /**
@@ -99,12 +101,10 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
    * @param s3Directories The directories list
    * 
    */
-  def s3DirectoryAnalytics(s3Directories:ListBuffer[DirectoriesResult]) {
+  def s3DirectoryAnalytics(s3DirectoriesRDD:RDD[DirectoriesResult]) {
     val spark = initSpark()
     import spark.implicits._
-    println("directories list is :")
-    s3Directories.foreach { directoryName => println(directoryName) }
-    val directoriesDS = spark.sparkContext.parallelize(s3Directories).toDS()
+    val directoriesDS = s3DirectoriesRDD.toDS()
     directoriesDS.cache()
     directoriesDS.createOrReplaceTempView("directories")
     val directoriesCountPerBucket = spark.sqlContext.sql("select bucketName,count(filePath) from directories group by bucketName").toJSON.collect()
@@ -120,12 +120,8 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
    * @param s3Paths The s3 file paths
    * 
    */
-  def s3AnalyticsByFileFormats(s3Paths: ListBuffer[String]) {
-    s3Paths.foreach(filePath=>println(filePath))
-    val spark = initSpark()
-    val filePathsRDD = spark.sparkContext.parallelize(s3Paths)
-    val s3AnalyticsByFileFormats = filePathsRDD.map(filePath=> {
-      println("here is file path" +filePath)
+  def s3AnalyticsByFileFormats(s3PathsRDD: RDD[String]) {
+    val s3AnalyticsByFileFormats = s3PathsRDD.map(filePath=> {
       val fileFormat = filePath.split("\\.")(1)
       (fileFormat,1)})
       .countByKey()     
@@ -145,7 +141,7 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
    */
   def exploreS3(bucketName: String, path: String, s3Paths: ListBuffer[String], s3Directories:ListBuffer[DirectoriesResult]) {
     val s3Client = initS3Client()
-    if (isRootPath(path)) {
+    if (isRootPath(path) && !isS3Directory(path)) {
       var s3Objects = S3Objects.withPrefix(s3Client, bucketName, path)
       for (s3Object <- s3Objects) {
         exploreS3(s3Object.getBucketName(), s3Object.getKey(), s3Paths,s3Directories)
@@ -168,13 +164,13 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
    *
    * @param s3Paths The list of all s3 paths
    */
-    def checkDuplicateFiles(s3Paths: ListBuffer[String]) {
+    def checkDuplicateFiles(s3PathsRDD: RDD[String]) {
     val spark = initSpark()
     import spark.implicits._
     import org.apache.spark.sql.functions._
     val duplicateFileResult = new ListBuffer[DuplicateFileResult]
     
-    s3Paths.foreach(filePath => {
+    s3PathsRDD.foreach(filePath => {
       val fileRDD = initSpark().sparkContext.textFile(S3Scheme.concat(filePath))
       val checkSum = fileRDD.calculateCheckSum(10)
       val result: DuplicateFileResult = DuplicateFileResult(checkSum, filePath)
@@ -182,7 +178,6 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
     })
 
     val  duplicateFileResultDS = spark.sparkContext.parallelize(duplicateFileResult).toDS()
-    //dplicateFileResultDS.createOrReplaceTempView("duplicateFiles")
     
     val results = duplicateFileResultDS.select($"checkSum",$"filePath")
                                        .groupBy($"checkSum")
