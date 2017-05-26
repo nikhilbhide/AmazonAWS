@@ -28,6 +28,7 @@ import org.apache.spark.rdd.RDD
  case class DuplicateFileResult(checkSum: String, filePath: String)
   case class FilesByFormatResult(bucketName:String,format:String,filePath:String)
   case class DirectoriesResult(bucketName:String,filePath:String)  
+  case class Bucket(bucketName:String, OwnerName:String,creationDate:String)
 class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.io.Serializable {
   val S3Scheme = "s3a://"
   var S3FileSeparator = "/"
@@ -80,8 +81,8 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
     var s3Directories = new ListBuffer[DirectoriesResult]
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
-
     buckets.toSeq.foreach { bucket =>
+      
       var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName.toString(), "")
       for (s3Object <- s3Objects) {
          exploreS3(s3Object.getBucketName(), s3Object.getKey, s3Paths,s3Directories)
@@ -180,7 +181,7 @@ class SparkS3Analytics(awsAccessKey: String, awsSecretKey: String) extends java.
     val  duplicateFileResultDS = spark.sparkContext.parallelize(duplicateFileResult).toDS()
     
     val results = duplicateFileResultDS.select($"checkSum",$"filePath")
-                                       .groupBy($"checkSum")
+                                       .agg($"checkSum")
                                        .agg(count(duplicateFileResultDS("filePath")) as "duplicateFileCount",collect_list(duplicateFileResultDS("filePath")) as "duplicateFilePaths")
                                        .sort($"duplicateFileCount".desc)
                                        .toJSON.collect()
