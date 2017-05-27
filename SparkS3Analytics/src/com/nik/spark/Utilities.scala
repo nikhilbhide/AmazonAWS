@@ -5,17 +5,23 @@ import java.util.regex.Matcher
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import com.maxmind.geoip.Location;
+import com.maxmind.geoip.LookupService;
+import com.maxmind.geoip.regionName;
+import java.io._
 
 object Utilities {
-  
+  val file = new File("/home/nik/git/AmazonAWS/SparkS3Analytics/src/GeoLiteCity.dat")
+  val locationLookUp = new LookupService(file, LookupService.GEOIP_MEMORY_CACHE)
+
   /** Retrieves a regex Pattern for parsing s3 logs. */
   def s3LogPattern(): Pattern = {
     val ownerName = "(\\S+)"
     val bucketName = "(\\S+)"
     val dateTime = "(\\[.+?\\])"
-    val ddd = "\\d{1,3}"         
+    val ddd = "\\d{1,3}"
     //val ip = "($ddd\\.$ddd\\.$ddd\\.$ddd)?"
-    val ip = s"($ddd\\.$ddd\\.$ddd\\.$ddd)?"  
+    val ip = s"($ddd\\.$ddd\\.$ddd\\.$ddd)?"
     val requester = "(\\S+)"
     val requesterID = "(\\S+)"
     val operation = "(\\S+)"
@@ -63,10 +69,18 @@ object Utilities {
       val referrer = matcher.group(16)
       val userAgent = matcher.group(17)
       val versionID = matcher.group(18)
+      val location = locationLookUp.getLocation(ip)
+      val country = location.countryName
+      val city = location.city
+      val latitude = location.latitude
+      val longitude = location.longitude
       return S3LogEntry(ownerName, bucketName, dateTime, ip, requester, requesterID,
-        operation, key, requestURI, httpStatus, errorCode, bytesSent, objectSize, totalTime, turnAroundTime, referrer, userAgent, versionID)
+        operation, key, requestURI, httpStatus, errorCode, bytesSent, objectSize, totalTime, turnAroundTime, referrer, userAgent, versionID, country, city, latitude, longitude)
     } else {
-      return S3LogEntry("error", "error", new java.sql.Date(new java.util.Date().getTime), "error", "error", "error", "error", "error", "error", -999, -999, -999, -999, -999, -999, "error", "error", "error")
+      return S3LogEntry("error", "error", new java.sql.Date(new java.util.Date().getTime), "error", "error", "error", "error", "error", "error", -999, -999, -999, -999, -999, -999, "error", "error", "error", "error", "error", -999, -999)
     }
-  }  
+  }
+  def getLocationFromIPAddress(ipAddress: String): Location = {
+    return locationLookUp.getLocation(ipAddress)
+  } 
 }
