@@ -13,7 +13,9 @@ object Utilities {
     val ownerName = "(\\S+)"
     val bucketName = "(\\S+)"
     val dateTime = "(\\[.+?\\])"
-    val ip = "($ddd\\.$ddd\\.$ddd\\.$ddd)?"
+    val ddd = "\\d{1,3}"         
+    //val ip = "($ddd\\.$ddd\\.$ddd\\.$ddd)?"
+    val ip = s"($ddd\\.$ddd\\.$ddd\\.$ddd)?"  
     val requester = "(\\S+)"
     val requesterID = "(\\S+)"
     val operation = "(\\S+)"
@@ -29,7 +31,7 @@ object Utilities {
     val userAgent = "(\\S+)"
     val versionID = "(\\S+)"
 
-    val regex = s"$ownerName $bucketName $dateTime $ip.* $requester $requesterID $operation $key $requestURI $httpStatus $errorCode $bytesSent $objectSize $totalTime $turnAroundTime $referrer $userAgent $versionID"
+    val regex = s"$ownerName $bucketName $dateTime $ip $requester $requesterID $operation $key $requestURI $httpStatus $errorCode $bytesSent $objectSize $totalTime $turnAroundTime $referrer $userAgent $versionID"
     Pattern.compile(regex)
   }
 
@@ -66,5 +68,5 @@ object Utilities {
     } else {
       return S3LogEntry("error", "error", new java.sql.Date(new java.util.Date().getTime), "error", "error", "error", "error", "error", "error", -999, -999, -999, -999, -999, -999, "error", "error", "error")
     }
-  }
+  }  
 }
