@@ -48,10 +48,10 @@ object S3FindDuplicateFilesTest {
 					if(args.length==4) {
 						path = args(4)
 					}
-			sparkS3FindDuplicateFilesInstance.findS3DuplicateFiles(args(2), path,s3Paths)
+			sparkS3FindDuplicateFilesInstance.exploreS3(args(2), path,s3Paths)
 		}
 		else {
-			sparkS3FindDuplicateFilesInstance.findS3DuplicateFiles(s3Paths)	
+			sparkS3FindDuplicateFilesInstance.exploreS3(s3Paths)	
 		}		
 	}
 }

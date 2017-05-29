@@ -17,13 +17,14 @@ import org.apache.log4j._
 import org.apache.spark.sql.functions._
 import org.apache.spark.rdd.RDD
 
+case class FileChecksum(checkSum: String, filePath: String)
+
 /**
  * Traverses s3 either entirely including all buckets or for a bucket only based on provided bucket name.
  */
 class S3FindDuplicateFiles (awsAccessKey: String, awsSecretKey: String) extends java.io.Serializable {
    val S3Scheme = "s3n://"
   var S3FileSeparator = "/"
-  case class Result(checkSum: String, filePath: String)
 
   /**
    * Initializes Spark Session object and also configures aws access key and secret keys in spark context.
@@ -67,13 +68,13 @@ class S3FindDuplicateFiles (awsAccessKey: String, awsSecretKey: String) extends 
    *
    * @param s3Paths The list in which all routes are stored.
    */
-  def findS3DuplicateFiles(s3Paths: ListBuffer[String]) {
+  def exploreS3(s3Paths: ListBuffer[String]) {
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
     buckets.toSeq.foreach { bucket =>
       var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName(), "")
       for (s3Object <- s3Objects) {
-        findS3DuplicateFiles(s3Object.getBucketName(), s3Object.getKey, s3Paths)
+        exploreS3(s3Object.getBucketName(), s3Object.getKey, s3Paths)
       }
       checkDuplicateFiles(s3Paths)
     }
@@ -86,12 +87,12 @@ class S3FindDuplicateFiles (awsAccessKey: String, awsSecretKey: String) extends 
    * @param path The prefix
    * @param s3Paths The list in which all routes are stored
    */
-  def findS3DuplicateFiles(bucketName: String, path: String, s3Paths: ListBuffer[String]) {
+  def exploreS3(bucketName: String, path: String, s3Paths: ListBuffer[String]) {
     val s3Client = initS3Client()
     if (isRootPath(path)) {
       var s3Objects = S3Objects.withPrefix(s3Client, bucketName, path)
       for (s3Object <- s3Objects) {
-        findS3DuplicateFiles(s3Object.getBucketName(), s3Object.getKey(), s3Paths)
+        exploreS3(s3Object.getBucketName(), s3Object.getKey(), s3Paths)
       }
     } else if (!isS3Directory(path)) {
       var absoluteS3Path = bucketName.concat(S3FileSeparator).concat(path)
@@ -111,11 +112,11 @@ class S3FindDuplicateFiles (awsAccessKey: String, awsSecretKey: String) extends 
     val spark = initSpark()
     import spark.implicits._
 
-    val resultList = new ListBuffer[Result]
+    val resultList = new ListBuffer[FileChecksum]
     s3Paths.foreach(filePath => {
       val fileRDD = initSpark().sparkContext.textFile(S3Scheme.concat(filePath))
       val checkSum = fileRDD.calculateCheckSum(10)
-      val result: Result = Result(checkSum, filePath)
+      val result = FileChecksum(checkSum, filePath)
       resultList += result
     })
 
