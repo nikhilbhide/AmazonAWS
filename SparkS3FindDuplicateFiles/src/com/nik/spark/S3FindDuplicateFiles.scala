@@ -23,7 +23,7 @@ case class FileChecksum(checkSum: String, filePath: String)
  * Traverses s3 either entirely including all buckets or for a bucket only based on provided bucket name.
  */
 class S3FindDuplicateFiles (awsAccessKey: String, awsSecretKey: String) extends java.io.Serializable {
-   val S3Scheme = "s3n://"
+  val S3Scheme = "s3a://"
   var S3FileSeparator = "/"
 
   /**
@@ -37,8 +37,10 @@ class S3FindDuplicateFiles (awsAccessKey: String, awsSecretKey: String) extends 
       .appName("SparkS3Integration")
       .master("local[*]")
       .getOrCreate()
-    spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", awsAccessKey)
-    spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecretKey)
+      spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", awsSecretKey)
+    spark.sparkContext.hadoopConfiguration.set("org.apache.hadoop.fs.s3a.S3AFileSystem", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+
     spark
   }
 
