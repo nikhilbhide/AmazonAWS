@@ -42,16 +42,7 @@ object S3FindDuplicateFilesTest {
 		val sparkS3FindDuplicateFilesInstance = new S3FindDuplicateFiles(args(0),args(1))
 		sparkS3FindDuplicateFilesInstance.initS3Client()
 		val s3Paths = new ListBuffer[String]()
-		if(args.length>2) {
-			val bucketName = args(3)
-					var path = S3BucketDefaultPath
-					if(args.length==4) {
-						path = args(4)
-					}
-			sparkS3FindDuplicateFilesInstance.exploreS3(args(2), path,s3Paths)
-		}
-		else {
-			sparkS3FindDuplicateFilesInstance.exploreS3(s3Paths)	
-		}		
+		sparkS3FindDuplicateFilesInstance.exploreS3(s3Paths)	
+		sparkS3FindDuplicateFilesInstance.checkDuplicateFiles(s3Paths)
 	}
 }

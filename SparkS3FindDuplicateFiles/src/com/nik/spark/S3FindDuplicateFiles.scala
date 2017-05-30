@@ -85,7 +85,6 @@ spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecre
         }
       }
     }
-    checkDuplicateFiles(s3Paths)
   } 
 
   /**
