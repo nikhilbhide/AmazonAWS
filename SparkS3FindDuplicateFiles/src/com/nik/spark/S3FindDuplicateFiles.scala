@@ -37,14 +37,14 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
       .appName("SparkS3Integration")
       .master("local[*]")
       .getOrCreate()
-   spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
+    spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", awsSecretKey)
     spark.sparkContext.hadoopConfiguration.set("fs.s3.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-      
-   /* spark.sparkContext.hadoopConfiguration.set("fs.s3.impl", "org.apache.hadoop.fs.s3native.NativeS3FileSystem")
+
+    /* spark.sparkContext.hadoopConfiguration.set("fs.s3.impl", "org.apache.hadoop.fs.s3native.NativeS3FileSystem")
 spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", awsAccessKey)
 spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecretKey)
-*/
+							 */
     spark
   }
 
@@ -55,8 +55,7 @@ spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecre
    */
   def initS3Client(): AmazonS3Client = {
     val credential = new BasicAWSCredentials(awsAccessKey, awsSecretKey)
-    val s3Client = new AmazonS3Client(credential)
-    s3Client
+    return new AmazonS3Client(credential)
   }
 
   def isRootPath(path: String): Boolean = {
@@ -78,33 +77,16 @@ spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecre
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
     buckets.toSeq.foreach { bucket =>
-        var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName(), "")
-        for (s3Object <- s3Objects) {
-          exploreS3(s3Object.getBucketName(), s3Object.getKey, s3Paths)
-        }
-      checkDuplicateFiles(s3Paths)
-    }
-  }
-
-  /**
-   * It traverses bucket based on bucket name and prefix. While exploring it stores all paths as well. If any file is encountered then it uses spark to read the file.
-   *
-   * @param bucketName The bucket that is to be traversed
-   * @param path The prefix
-   * @param s3Paths The list in which all routes are stored
-   */
-  def exploreS3(bucketName: String, path: String, s3Paths: ListBuffer[String]) {
-    val s3Client = initS3Client()
-    if (isRootPath(path)) {
-      var s3Objects = S3Objects.withPrefix(s3Client, bucketName, path)
+      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName(), "")
       for (s3Object <- s3Objects) {
-        exploreS3(s3Object.getBucketName(), s3Object.getKey(), s3Paths)
+        if (!isS3Directory(s3Object.getKey)) {
+          var absoluteS3Path = bucket.getName().concat(S3FileSeparator).concat(s3Object.getKey)
+          s3Paths += absoluteS3Path
+        }
       }
-    } else if (!isS3Directory(path)) {
-      var absoluteS3Path = bucketName.concat(S3FileSeparator).concat(path)
-      s3Paths += absoluteS3Path
     }
-  }
+    checkDuplicateFiles(s3Paths)
+  } 
 
   /**
    * Reads all files in the file path using Spark, distributes this to entire cluster, calculates checksum of each of the file using MD5.
@@ -122,7 +104,7 @@ spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecre
     s3Paths.foreach(filePath => {
       val fileRDD = initSpark().sparkContext.textFile(S3Scheme.concat(filePath))
       fileRDD.cache()
-      val lk = fileRDD.collect()
+
       val checkSum = fileRDD.calculateCheckSum(1000)
       val result = FileChecksum(checkSum, filePath)
       resultList += result
