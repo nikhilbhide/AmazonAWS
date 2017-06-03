@@ -41,10 +41,6 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", awsSecretKey)
     spark.sparkContext.hadoopConfiguration.set("fs.s3.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
-    /* spark.sparkContext.hadoopConfiguration.set("fs.s3.impl", "org.apache.hadoop.fs.s3native.NativeS3FileSystem")
-spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsAccessKeyId", awsAccessKey)
-spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecretKey)
-							 */
     spark
   }
 
@@ -77,10 +73,10 @@ spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecre
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
     buckets.toSeq.foreach { bucket =>
-      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName(), "")
+      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
       for (s3Object <- s3Objects) {
         if (!isS3Directory(s3Object.getKey)) {
-          var absoluteS3Path = bucket.getName().concat(S3FileSeparator).concat(s3Object.getKey)
+          var absoluteS3Path = bucket.getName.concat(S3FileSeparator).concat(s3Object.getKey)
           s3Paths += absoluteS3Path
         }
       }
@@ -105,6 +101,7 @@ spark.sparkContext.hadoopConfiguration.set("fs.s3n.awsSecretAccessKey", awsSecre
       fileRDD.cache()
 
       val checkSum = fileRDD.calculateCheckSum(1000)
+      
       val result = FileChecksum(checkSum, filePath)
       resultList += result
     })
