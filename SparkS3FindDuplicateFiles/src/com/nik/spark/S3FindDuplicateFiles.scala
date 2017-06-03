@@ -71,14 +71,14 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
    */
   def exploreS3(s3Paths: ListBuffer[String]) {
     val s3Client = initS3Client()
-    //var buckets = s3Client.listBuckets()
-    //buckets.toSeq.foreach { bucket =>
-    val bucket = "mysimbucket"
-    var s3Objects = S3Objects.withPrefix(s3Client, bucket, "")
-    for (s3Object <- s3Objects) {
-      if (!isS3Directory(s3Object.getKey)) {
-        var absoluteS3Path = bucket.concat(S3FileSeparator).concat(s3Object.getKey)
-        s3Paths += absoluteS3Path
+    var buckets = s3Client.listBuckets()
+    buckets.toSeq.foreach { bucket =>
+      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
+      for (s3Object <- s3Objects) {
+        if (!isS3Directory(s3Object.getKey)) {
+          var absoluteS3Path = bucket.getName().concat(S3FileSeparator).concat(s3Object.getKey)
+          s3Paths += absoluteS3Path
+        }
       }
     }
   }
@@ -111,9 +111,9 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
     val duplicateFiles = filePathByCheckSumDS.select($"checkSum", $"filePath")
       .groupBy($"checkSum")
       .agg(count($"filePath") as "duplicateFileCount", collect_list($"filePath") as "duplicateFilePaths")
-      .filter($"duplicateFileCount">1)
+      .filter($"duplicateFileCount" > 1)
       .sort($"duplicateFileCount".desc)
-      
+
     //display results
     duplicateFiles.show()
   }
