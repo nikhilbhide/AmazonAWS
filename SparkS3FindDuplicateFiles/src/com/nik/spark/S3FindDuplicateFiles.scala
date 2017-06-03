@@ -71,17 +71,17 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
    */
   def exploreS3(s3Paths: ListBuffer[String]) {
     val s3Client = initS3Client()
-    var buckets = s3Client.listBuckets()
-    buckets.toSeq.foreach { bucket =>
-      var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
-      for (s3Object <- s3Objects) {
-        if (!isS3Directory(s3Object.getKey)) {
-          var absoluteS3Path = bucket.getName.concat(S3FileSeparator).concat(s3Object.getKey)
-          s3Paths += absoluteS3Path
-        }
+    //var buckets = s3Client.listBuckets()
+    //buckets.toSeq.foreach { bucket =>
+    val bucket = "mysimbucket"
+    var s3Objects = S3Objects.withPrefix(s3Client, bucket, "")
+    for (s3Object <- s3Objects) {
+      if (!isS3Directory(s3Object.getKey)) {
+        var absoluteS3Path = bucket.concat(S3FileSeparator).concat(s3Object.getKey)
+        s3Paths += absoluteS3Path
       }
     }
-  } 
+  }
 
   /**
    * Reads all files in the file path using Spark, distributes this to entire cluster, calculates checksum of each of the file using MD5.
@@ -101,19 +101,20 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
       fileRDD.cache()
 
       val checkSum = fileRDD.calculateCheckSum(1000)
-      
+
       val result = FileChecksum(checkSum, filePath)
       resultList += result
     })
 
-    val resultRDD = spark.sparkContext.parallelize(resultList)
-    val results = resultRDD.map(x => (x.checkSum, x.filePath))
-      .groupByKey()
-      .map(x => (x._1, (x._2, x._2.toList.length)))
-      .sortBy(key => key._2._2, ascending = false)
-      .collect()
+    val filePathByCheckSumDS = spark.sparkContext.parallelize(resultList).toDS()
 
+    val duplicateFiles = filePathByCheckSumDS.select($"checkSum", $"filePath")
+      .groupBy($"checkSum")
+      .agg(count($"filePath") as "duplicateFileCount", collect_list($"filePath") as "duplicateFilePaths")
+      .filter($"duplicateFileCount">1)
+      .sort($"duplicateFileCount".desc)
+      
     //display results
-    results.foreach(record => (println(s"Files with checksum ${record._1} are ${record._2._1.toList} and duplication count is ${record._2._2}")))
+    duplicateFiles.show()
   }
 }
