@@ -69,9 +69,10 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
    *
    * @param s3Paths The list in which all routes are stored.
    */
-  def exploreS3(s3Paths: ListBuffer[String]) {
+  def exploreS3(s3Paths: ListBuffer[String], inputBuckets:List[String]) {
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
+                          .filter { bucket => inputBuckets.contains(bucket)}
     buckets.toSeq.foreach { bucket =>
       var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
       for (s3Object <- s3Objects) {

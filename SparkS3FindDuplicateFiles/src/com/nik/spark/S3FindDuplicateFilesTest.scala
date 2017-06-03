@@ -34,15 +34,21 @@ object S3FindDuplicateFilesTest {
 	 *   
 	 */
 	def main(args:Array[String]) {
-		if(args.length!=2) {
+	  var buckets = List[String]()
+		if(args.length>=2) {
 			println("AWS access key and secret key are not provided. Provide access key as first argument and secret key as access key.")
 			System.exit(0)
 		}
+		
+		if(args.length==3) {
+		  buckets = args(3).split(",").to[List]
+		}
+		
 
 		val sparkS3FindDuplicateFilesInstance = new S3FindDuplicateFiles(args(0),args(1))
 		sparkS3FindDuplicateFilesInstance.initS3Client()
 		val s3Paths = new ListBuffer[String]()
-		sparkS3FindDuplicateFilesInstance.exploreS3(s3Paths)	
+		sparkS3FindDuplicateFilesInstance.exploreS3(s3Paths,buckets)	
 		sparkS3FindDuplicateFilesInstance.checkDuplicateFiles(s3Paths)
 	}
 }
