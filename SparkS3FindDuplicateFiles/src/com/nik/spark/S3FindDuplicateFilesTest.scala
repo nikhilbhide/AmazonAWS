@@ -41,7 +41,7 @@ object S3FindDuplicateFilesTest {
 		}
 		
 		if(args.length==3) {
-		  buckets = args(2).split(",").to[List]
+		  buckets = args(3).split(",").to[List]
 		}
 		
 
