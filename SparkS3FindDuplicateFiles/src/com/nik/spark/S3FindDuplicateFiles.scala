@@ -72,7 +72,10 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
   def exploreS3(s3Paths: ListBuffer[String], inputBuckets:List[String]) {
     val s3Client = initS3Client()
     var buckets = s3Client.listBuckets()
-                          .filter { bucket => inputBuckets.contains(bucket)}
+    
+    if(!inputBuckets.isEmpty)
+    buckets = buckets.filter { bucket => inputBuckets.contains(bucket.getName)}
+    
     buckets.toSeq.foreach { bucket =>
       var s3Objects = S3Objects.withPrefix(s3Client, bucket.getName, "")
       for (s3Object <- s3Objects) {

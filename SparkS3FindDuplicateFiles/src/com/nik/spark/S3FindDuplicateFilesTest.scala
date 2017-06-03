@@ -35,13 +35,13 @@ object S3FindDuplicateFilesTest {
 	 */
 	def main(args:Array[String]) {
 	  var buckets = List[String]()
-		if(args.length>=2) {
+		if(args.length<2) {
 			println("AWS access key and secret key are not provided. Provide access key as first argument and secret key as access key.")
 			System.exit(0)
 		}
 		
 		if(args.length==3) {
-		  buckets = args(3).split(",").to[List]
+		  buckets = args(2).split(",").to[List]
 		}
 		
 
