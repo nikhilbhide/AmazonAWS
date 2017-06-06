@@ -104,7 +104,7 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
       val fileRDD = initSpark().sparkContext.textFile(S3Scheme.concat(filePath))
       fileRDD.cache()
 
-      val checkSum = fileRDD.calculateCheckSum(1000)
+      val checkSum = fileRDD.calculateCheckSum(100)
 
       val result = FileChecksum(checkSum, filePath)
       resultList += result
