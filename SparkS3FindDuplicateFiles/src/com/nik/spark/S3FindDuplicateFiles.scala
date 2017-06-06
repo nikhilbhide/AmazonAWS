@@ -34,7 +34,7 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
   def initSpark(): SparkSession = {
     val spark = SparkSession
       .builder
-      .appName("SparkS3Integration")
+      .appName("SparkS3FindDuplicateFiles")
       .master("local[*]")
       .getOrCreate()
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsAccessKey)
