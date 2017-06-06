@@ -7,7 +7,7 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.sql._
 import org.apache.log4j._
 import org.apache.spark.sql.functions._
-
+import org.apache.hadoop.fs.FileSystem
 /**
  * Traverses s3 or provided bucket and explores files and folders, reads files using spark and displays all paths.
  */
@@ -41,10 +41,9 @@ object S3FindDuplicateFilesTest {
 		}
 		
 		if(args.length==3) {
-		  buckets = args(3).split(",").to[List]
-		}
-		
-
+		  buckets = args(2).split(",").to[List]
+		}	
+  
 		val sparkS3FindDuplicateFilesInstance = new S3FindDuplicateFiles(args(0),args(1))
 		sparkS3FindDuplicateFilesInstance.initS3Client()
 		val s3Paths = new ListBuffer[String]()
