@@ -72,8 +72,7 @@
 			<artifactId>scala-library</artifactId>
 			<version>2.11.8</version>
 		</dependency>
-	</dependencies>
-	
+	</dependencies>	
 	<build>
 		<finalName>SparkS3FIndDuplicateFiles</finalName>
 		<plugins>
