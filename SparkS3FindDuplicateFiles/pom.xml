@@ -73,6 +73,7 @@
 			<version>2.11.8</version>
 		</dependency>
 	</dependencies>	
+	
 	<build>
 		<finalName>SparkS3FIndDuplicateFiles</finalName>
 		<plugins>
