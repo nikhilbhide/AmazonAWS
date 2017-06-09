@@ -9,12 +9,17 @@ We need to perform following steps -
 
 ### How to Run?
 #### With Scala-Eclipse
-Import project into IDE. Create a new Run Configuration and provide required arguments (AWS_ACCESS_KEY) and (AWS_SECRET_KEY) as command line arguments before running the S3FindDuplicateFilesTest.
-
+Use mvn eclipse:eclipse command to create eclipse project settings and then import project into IDE. Create a new Run Configuration and provide required arguments (AWS_ACCESS_KEY) and (AWS_SECRET_KEY) as command line arguments before running the S3FindDuplicateFilesTest. Optionally, you can provide comma separated bucket names as third argument.
 
 #### With Spark-Submit
-Create fat-jar using maven package and run spark-submit.
-./spark-submit \
+Create fat-jar using mvn package command and run spark-submit.
+
+.bin/spark-submit \
 --class com.nik.spark.S3FindDuplicateFilesTest \
 <jar_location> \
 <AWS_ACCESSKEY> <AWS_SECRET_KEY> [bucket1,bucket2...]
+
+#Note - You need Hadoop to run application using Spark-Submit.
+
+#### With AWS EMR
+If you dont have local setup of Spark then you can application on AWS EMR. Generate the jar using mvn package and then create AWS EMR cluster (small one with one master and 2 workers is more than enough). Upload jar file to s3 bucket and then log in on to EMR EC2 instance and run spark submit as described above. 
