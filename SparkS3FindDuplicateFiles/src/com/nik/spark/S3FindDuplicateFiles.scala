@@ -90,8 +90,7 @@ class S3FindDuplicateFiles(awsAccessKey: String, awsSecretKey: String) extends j
   /**
    * Reads all files in the file path using Spark, distributes this to entire cluster, calculates checksum of each of the file using MD5.
    * Groups files based on checksum and find the corresponding count.
-   * Order the result based on the # of duplication.
-   * If recursive traverse is true then all files under supplied file path are considered for duplicate check.
+   * Order the result based on the duplication count.
    *
    * @param s3Paths The list of all s3 paths
    */
