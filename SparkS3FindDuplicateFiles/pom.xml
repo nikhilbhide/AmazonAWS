@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<name>${project.artifactId}</name>
 	<description>Identify duplicate files in AWS S3 using Apache Spark</description>
-
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.version>2.11.8</scala.version>
